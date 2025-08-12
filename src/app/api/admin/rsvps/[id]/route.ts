@@ -10,7 +10,7 @@ async function isAdmin(email: string | null | undefined) {
 
 export async function DELETE(
   request: Request,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession()
@@ -19,7 +19,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = context.params
+    const { id } = params
 
     await prisma.rsvp.delete({
       where: { id }
@@ -34,7 +34,7 @@ export async function DELETE(
 
 export async function PUT(
   request: Request,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession()
@@ -43,7 +43,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = context.params
+    const { id } = params
     const body = await request.json()
     const { name, email, attending, guests, dietaryRestrictions, specialRequests } = body
 
