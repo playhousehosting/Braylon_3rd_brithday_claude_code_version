@@ -39,6 +39,7 @@ export default function AdminSignIn() {
         }
       }
     } catch (error) {
+      console.error("Sign in error:", error)
       setError("An error occurred during sign in")
     } finally {
       setLoading(false)
@@ -57,7 +58,7 @@ export default function AdminSignIn() {
             <Shield className="w-12 h-12 mx-auto mb-4 text-blue-600" />
             <CardTitle className="text-2xl">Admin Sign In</CardTitle>
             <p className="text-gray-600">
-              Sign in to access Braylon's birthday party admin dashboard
+              Sign in to access Braylon&apos;s birthday party admin dashboard
             </p>
           </CardHeader>
           <CardContent>
