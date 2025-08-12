@@ -2,7 +2,7 @@ import { withAuth } from "next-auth/middleware"
 
 export default withAuth({
   pages: {
-    signIn: "/admin",
+    signIn: "/admin/signin",
   },
   callbacks: {
     authorized: ({ token }) => {
@@ -14,5 +14,5 @@ export default withAuth({
 })
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin", "/admin/((?!signin).*)"],
 }
