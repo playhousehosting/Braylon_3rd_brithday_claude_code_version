@@ -29,7 +29,18 @@ export async function GET() {
     })
 
     // Format the data for the frontend
-    const formattedRsvps = rsvps.map((rsvp) => ({
+    const formattedRsvps = rsvps.map((rsvp: {
+      id: string;
+      attending: boolean;
+      guestCount: number;
+      dietaryRestrictions: string | null;
+      specialRequests: string | null;
+      createdAt: Date;
+      user: {
+        name: string | null;
+        email: string;
+      };
+    }) => ({
       id: rsvp.id,
       name: rsvp.user.name || 'No name',
       email: rsvp.user.email,
