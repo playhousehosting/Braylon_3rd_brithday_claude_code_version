@@ -10,7 +10,7 @@ import {
   Download, 
   Shield, 
   LogOut,
-  Image,
+  Image as ImageIcon, // Renamed to avoid conflict with HTML ImageElement
   RefreshCw
 } from "lucide-react"
 
@@ -226,7 +226,7 @@ export default function AdminDashboard() {
                   <p className="text-purple-100">Photos</p>
                   <p className="text-3xl font-bold">{stats.photos}</p>
                 </div>
-                <Image className="w-8 h-8 text-purple-200" aria-hidden="true" />
+                <ImageIcon className="w-8 h-8 text-purple-200" aria-hidden="true" />
               </div>
             </CardContent>
           </Card>
