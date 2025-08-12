@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
 
 // Simple in-memory rate limiting
 const rateLimit = new Map<string, { count: number; resetTime: number }>()
@@ -46,22 +47,59 @@ export async function POST(request: NextRequest) {
 
     const { name, email, attending, guestCount, dietaryRestrictions, specialRequests } = body
 
-    // TODO: Replace with real Prisma operations once database is working
-    // For now, just log the RSVP and return success
-    const mockRsvp = {
-      id: `mock-${Date.now()}`,
-      name,
-      email,
-      attending,
-      guestCount: Math.max(0, Math.min(10, guestCount || 0)),
-      dietaryRestrictions,
-      specialRequests,
-      createdAt: new Date().toISOString()
+    // Check if user exists, create if not
+    let user = await prisma.user.findUnique({
+      where: { email }
+    })
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          name,
+          email
+        }
+      })
     }
 
-    console.log("Mock RSVP submitted:", mockRsvp)
+    // Create or update RSVP
+    const rsvp = await prisma.rsvp.upsert({
+      where: { userId: user.id },
+      update: {
+        attending: attending === true || attending === 'true',
+        guestCount: Math.max(0, Math.min(10, parseInt(guestCount?.toString() || '1'))),
+        dietaryRestrictions: dietaryRestrictions || null,
+        specialRequests: specialRequests || null,
+      },
+      create: {
+        userId: user.id,
+        attending: attending === true || attending === 'true',
+        guestCount: Math.max(0, Math.min(10, parseInt(guestCount?.toString() || '1'))),
+        dietaryRestrictions: dietaryRestrictions || null,
+        specialRequests: specialRequests || null,
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
+      }
+    })
 
-    return NextResponse.json({ success: true, rsvp: mockRsvp })
+    return NextResponse.json({ 
+      success: true, 
+      rsvp: {
+        id: rsvp.id,
+        name: rsvp.user.name,
+        email: rsvp.user.email,
+        attending: rsvp.attending,
+        guestCount: rsvp.guestCount,
+        dietaryRestrictions: rsvp.dietaryRestrictions,
+        specialRequests: rsvp.specialRequests,
+        createdAt: rsvp.createdAt.toISOString()
+      }
+    })
   } catch (error) {
     console.error("RSVP error:", error)
     return NextResponse.json(
@@ -73,11 +111,34 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    // TODO: Replace with real Prisma query once database is working
-    // For now, return empty array since this endpoint is primarily for admin use
-    const mockRsvps: unknown[] = []
+    // Fetch all RSVPs from database
+    const rsvps = await prisma.rsvp.findMany({
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
 
-    return NextResponse.json({ rsvps: mockRsvps })
+    // Transform data for response
+    const transformedRsvps = rsvps.map((rsvp: typeof rsvps[0]) => ({
+      id: rsvp.id,
+      name: rsvp.user.name,
+      email: rsvp.user.email,
+      attending: rsvp.attending,
+      guestCount: rsvp.guestCount,
+      dietaryRestrictions: rsvp.dietaryRestrictions,
+      specialRequests: rsvp.specialRequests,
+      createdAt: rsvp.createdAt.toISOString()
+    }))
+
+    return NextResponse.json({ rsvps: transformedRsvps })
   } catch (error) {
     console.error("Get RSVPs error:", error)
     return NextResponse.json(
