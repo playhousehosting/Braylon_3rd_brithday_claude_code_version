@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
 
 // Check if email belongs to admin domain
 async function isAdmin(email: string | null | undefined) {
@@ -21,9 +22,10 @@ export async function DELETE(
 
     const { id } = await params
 
-    // TODO: Replace with real Prisma delete once database is working
-    // For now, return success since we're using mock data
-    console.log(`Mock delete RSVP with id: ${id}`)
+    // Delete RSVP from database
+    await prisma.rsvp.delete({
+      where: { id }
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {
@@ -47,22 +49,58 @@ export async function PUT(
     const body = await request.json()
     const { name, email, attending, guests, dietaryRestrictions, specialRequests } = body
 
-    // TODO: Replace with real Prisma update once database is working
-    // For now, return mock updated data
-    const mockUpdatedRsvp = {
-      id,
-      name,
-      email,
-      attending: attending === "true",
-      guestCount: parseInt(guests) || 1,
-      dietaryRestrictions: dietaryRestrictions || null,
-      specialRequests: specialRequests || null,
-      createdAt: new Date().toISOString()
+    // Find the RSVP to update
+    const existingRsvp = await prisma.rsvp.findUnique({
+      where: { id },
+      include: { user: true }
+    })
+
+    if (!existingRsvp) {
+      return NextResponse.json({ error: "RSVP not found" }, { status: 404 })
     }
 
-    console.log(`Mock update RSVP with id: ${id}`, mockUpdatedRsvp)
+    // Update user information if changed
+    if (name !== existingRsvp.user.name || email !== existingRsvp.user.email) {
+      await prisma.user.update({
+        where: { id: existingRsvp.userId },
+        data: {
+          name: name || existingRsvp.user.name,
+          email: email || existingRsvp.user.email
+        }
+      })
+    }
 
-    return NextResponse.json({ rsvp: mockUpdatedRsvp })
+    // Update RSVP
+    const updatedRsvp = await prisma.rsvp.update({
+      where: { id },
+      data: {
+        attending: attending === "true" || attending === true,
+        guestCount: Math.max(0, Math.min(10, parseInt(guests?.toString() || '1'))),
+        dietaryRestrictions: dietaryRestrictions || null,
+        specialRequests: specialRequests || null,
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
+      }
+    })
+
+    return NextResponse.json({ 
+      rsvp: {
+        id: updatedRsvp.id,
+        name: updatedRsvp.user.name,
+        email: updatedRsvp.user.email,
+        attending: updatedRsvp.attending,
+        guestCount: updatedRsvp.guestCount,
+        dietaryRestrictions: updatedRsvp.dietaryRestrictions,
+        specialRequests: updatedRsvp.specialRequests,
+        createdAt: updatedRsvp.createdAt.toISOString()
+      }
+    })
   } catch (error) {
     console.error("Error updating RSVP:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

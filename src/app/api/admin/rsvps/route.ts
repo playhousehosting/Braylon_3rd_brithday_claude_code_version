@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { Session } from "next-auth"
+import { prisma } from "@/lib/prisma"
 
 // Check if email belongs to admin domain
 function isAdminEmail(email: string | null | undefined): boolean {
@@ -18,42 +19,34 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // TODO: Replace with real Prisma data once database is working
-    // For now, return mock data to demonstrate the admin panel functionality
-    const mockRsvps = [
-      {
-        id: "1",
-        name: "John Smith",
-        email: "john@example.com",
-        attending: true,
-        guestCount: 2,
-        dietaryRestrictions: "No nuts",
-        specialRequests: "High chair needed",
-        createdAt: new Date().toISOString()
+    // Fetch all RSVPs from database with user information
+    const rsvps = await prisma.rsvp.findMany({
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
       },
-      {
-        id: "2", 
-        name: "Sarah Johnson",
-        email: "sarah@example.com",
-        attending: true,
-        guestCount: 1,
-        dietaryRestrictions: null,
-        specialRequests: null,
-        createdAt: new Date(Date.now() - 86400000).toISOString()
-      },
-      {
-        id: "3",
-        name: "Mike Wilson", 
-        email: "mike@example.com",
-        attending: false,
-        guestCount: 0,
-        dietaryRestrictions: null,
-        specialRequests: "Sorry, can't make it!",
-        createdAt: new Date(Date.now() - 172800000).toISOString()
+      orderBy: {
+        createdAt: 'desc'
       }
-    ]
+    })
 
-    return NextResponse.json({ rsvps: mockRsvps })
+    // Transform data for admin response
+    const transformedRsvps = rsvps.map((rsvp: typeof rsvps[0]) => ({
+      id: rsvp.id,
+      name: rsvp.user.name,
+      email: rsvp.user.email,
+      attending: rsvp.attending,
+      guestCount: rsvp.guestCount,
+      dietaryRestrictions: rsvp.dietaryRestrictions,
+      specialRequests: rsvp.specialRequests,
+      createdAt: rsvp.createdAt.toISOString()
+    }))
+
+    return NextResponse.json({ rsvps: transformedRsvps })
   } catch (error) {
     console.error("Error fetching RSVPs:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

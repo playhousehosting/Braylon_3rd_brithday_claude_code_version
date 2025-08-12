@@ -1,0 +1,99 @@
+name: Prevent Mock Data in Production
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main, master ]
+
+jobs:
+  check-no-mock-data:
+    runs-on: ubuntu-latest
+    name: Check for Mock Data Usage
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check for mock data in source files
+      run: |
+        echo "Checking for mock data usage in source files..."
+        
+        # Search for mock-related patterns in source files
+        MOCK_PATTERNS=(
+          "mockRsvp"
+          "mockData" 
+          "mock-"
+          "// TODO.*mock"
+          "Mock.*="
+          "const.*mock"
+          "let.*mock"
+          "var.*mock"
+        )
+        
+        VIOLATIONS_FOUND=false
+        
+        for pattern in "${MOCK_PATTERNS[@]}"; do
+          echo "Checking pattern: $pattern"
+          if grep -r -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+             --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git \
+             "$pattern" src/; then
+            echo "❌ Found mock data pattern: $pattern"
+            VIOLATIONS_FOUND=true
+          fi
+        done
+        
+        # Check for TODO comments about replacing mock data
+        echo "Checking for TODO comments about mock data..."
+        if grep -r -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+           --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git \
+           "TODO.*Replace.*mock\|TODO.*mock.*replace" src/; then
+          echo "❌ Found TODO comments about replacing mock data"
+          VIOLATIONS_FOUND=true
+        fi
+        
+        if [ "$VIOLATIONS_FOUND" = true ]; then
+          echo ""
+          echo "🚫 FAILURE: Mock data found in source code!"
+          echo "This application must be production-ready without mock data."
+          echo "Please replace all mock implementations with real database operations."
+          exit 1
+        else
+          echo "✅ SUCCESS: No mock data found in source code."
+        fi
+        
+    - name: Check for hardcoded example data
+      run: |
+        echo "Checking for hardcoded example data..."
+        
+        # Look for suspicious example data patterns
+        EXAMPLE_PATTERNS=(
+          "john@example.com"
+          "test@test.com"
+          "@example.com"
+          "John Smith"
+          "Sarah Johnson"
+          "example.*data"
+        )
+        
+        VIOLATIONS_FOUND=false
+        
+        for pattern in "${EXAMPLE_PATTERNS[@]}"; do
+          echo "Checking for example pattern: $pattern"
+          if grep -r -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+             --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git \
+             --exclude="*.md" --exclude="*.txt" \
+             "$pattern" src/; then
+            echo "⚠️  Found potential hardcoded example data: $pattern"
+            VIOLATIONS_FOUND=true
+          fi
+        done
+        
+        if [ "$VIOLATIONS_FOUND" = true ]; then
+          echo ""
+          echo "🚫 FAILURE: Hardcoded example data found!"
+          echo "Please remove hardcoded example data and use real database operations."
+          exit 1
+        else
+          echo "✅ SUCCESS: No hardcoded example data found."
+        fi
