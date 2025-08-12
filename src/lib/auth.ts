@@ -3,7 +3,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
-import { Session, User } from "next-auth"
+import { Session } from "next-auth"
 import { JWT } from "next-auth/jwt"
 
 export const authOptions: NextAuthOptions = {
@@ -55,7 +55,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user && token.sub) {
         // Extend the session user type with id
-        (session.user as any).id = token.sub
+        (session.user as { id?: string }).id = token.sub
       }
       return session
     }

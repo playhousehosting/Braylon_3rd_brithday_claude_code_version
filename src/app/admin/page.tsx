@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession, signIn, signOut } from "next-auth/react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -38,14 +38,7 @@ export default function AdminDashboard() {
     photos: 0
   })
 
-  useEffect(() => {
-    if (session) {
-      fetchRSVPs()
-      fetchPhotos()
-    }
-  }, [session])
-
-  const fetchRSVPs = async () => {
+  const fetchRSVPs = useCallback(async () => {
     try {
       setLoading(true)
       const res = await fetch('/api/admin/rsvps')
@@ -59,13 +52,20 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const fetchPhotos = async () => {
+  const fetchPhotos = useCallback(async () => {
     // For now, we'll just set a placeholder
     setPhotos([])
     setStats(prev => ({ ...prev, photos: 0 }))
-  }
+  }, [])
+
+  useEffect(() => {
+    if (session) {
+      fetchRSVPs()
+      fetchPhotos()
+    }
+  }, [session, fetchRSVPs, fetchPhotos])
 
   const calculateStats = (data: RSVP[]) => {
     const attending = data.filter(rsvp => rsvp.attending).length

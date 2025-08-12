@@ -29,7 +29,7 @@ export async function GET() {
     })
 
     // Format the data for the frontend
-    const formattedRsvps = rsvps.map((rsvp: any) => ({
+    const formattedRsvps = rsvps.map((rsvp) => ({
       id: rsvp.id,
       name: rsvp.user.name || 'No name',
       email: rsvp.user.email,
