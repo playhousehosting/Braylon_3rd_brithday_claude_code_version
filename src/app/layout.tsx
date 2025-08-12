@@ -36,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
-        <Providers session={undefined}>
+        <Providers>
           <header className="sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b border-border">
             <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
               <div className="font-extrabold text-xl text-yellow-500 tracking-wide drop-shadow">
