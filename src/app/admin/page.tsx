@@ -25,10 +25,16 @@ interface RSVP {
   createdAt: string
 }
 
+interface Photo {
+  id: string
+  url: string
+  name: string
+}
+
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
   const [rsvps, setRsvps] = useState<RSVP[]>([])
-  const [photos, setPhotos] = useState<any[]>([])
+  const [photos, setPhotos] = useState<Photo[]>([])
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     totalRSVPs: 0,
@@ -37,6 +43,19 @@ export default function AdminDashboard() {
     totalGuests: 0,
     photos: 0
   })
+
+  const calculateStats = useCallback((data: RSVP[]) => {
+    const attending = data.filter(rsvp => rsvp.attending).length
+    const totalGuests = data.reduce((sum, rsvp) => sum + (rsvp.attending ? rsvp.guestCount : 0), 0)
+    
+    setStats({
+      totalRSVPs: data.length,
+      attending,
+      notAttending: data.length - attending,
+      totalGuests,
+      photos: photos.length
+    })
+  }, [photos.length])
 
   const fetchRSVPs = useCallback(async () => {
     try {
@@ -52,7 +71,7 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [calculateStats])
 
   const fetchPhotos = useCallback(async () => {
     // For now, we'll just set a placeholder
@@ -66,19 +85,6 @@ export default function AdminDashboard() {
       fetchPhotos()
     }
   }, [session, fetchRSVPs, fetchPhotos])
-
-  const calculateStats = (data: RSVP[]) => {
-    const attending = data.filter(rsvp => rsvp.attending).length
-    const totalGuests = data.reduce((sum, rsvp) => sum + (rsvp.attending ? rsvp.guestCount : 0), 0)
-    
-    setStats({
-      totalRSVPs: data.length,
-      attending,
-      notAttending: data.length - attending,
-      totalGuests,
-      photos: photos.length
-    })
-  }
 
   const downloadRSVPs = () => {
     const csvContent = [
@@ -220,7 +226,7 @@ export default function AdminDashboard() {
                   <p className="text-purple-100">Photos</p>
                   <p className="text-3xl font-bold">{stats.photos}</p>
                 </div>
-                <Image className="w-8 h-8 text-purple-200" />
+                <Image className="w-8 h-8 text-purple-200" aria-hidden="true" />
               </div>
             </CardContent>
           </Card>
