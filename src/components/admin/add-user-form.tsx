@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-// import { Badge } from "@/components/ui/badge"
 import { UserPlus, X, Check, AlertCircle } from "lucide-react"
 
 const userSchema = z.object({

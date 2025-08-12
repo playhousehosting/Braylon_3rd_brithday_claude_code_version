@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { RSVP } from "@prisma/client"
+import { Session } from "next-auth"
 
 // Check if email belongs to admin domain
 function isAdminEmail(email: string | null | undefined): boolean {
@@ -12,7 +12,7 @@ function isAdminEmail(email: string | null | undefined): boolean {
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as Session | null
     
     // Check if user is admin
     if (!session?.user?.email || !isAdminEmail(session.user.email)) {
@@ -29,7 +29,7 @@ export async function GET() {
     })
 
     // Format the data for the frontend
-    const formattedRsvps = rsvps.map((rsvp: RSVP & { user: { name: string | null, email: string } }) => ({
+    const formattedRsvps = rsvps.map((rsvp: any) => ({
       id: rsvp.id,
       name: rsvp.user.name || 'No name',
       email: rsvp.user.email,
