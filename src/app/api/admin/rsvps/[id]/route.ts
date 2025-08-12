@@ -33,7 +33,7 @@ export async function DELETE(
 }
 
 export async function PUT(
-  request: NextRequest, // Explicitly include NextRequest here
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
