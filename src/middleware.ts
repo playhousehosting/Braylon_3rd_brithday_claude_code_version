@@ -4,6 +4,13 @@ export default withAuth({
   pages: {
     signIn: "/admin",
   },
+  callbacks: {
+    authorized: ({ token }) => {
+      if (!token?.email) return false
+      // Allow access to admin panel for dynamicendpoints.com emails
+      return token.email.endsWith('@dynamicendpoints.com')
+    }
+  }
 })
 
 export const config = {

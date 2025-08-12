@@ -12,16 +12,8 @@ The admin dashboard is now available at `/admin` and includes:
 
 ### Setup Steps:
 
-#### 1. Configure Admin Emails
-Edit the following files to add your admin email addresses:
-
-**File: `src/app/api/admin/rsvps/route.ts`**
-**File: `src/middleware.ts`**
-
-```typescript
-// Replace with your actual admin email
-const ADMIN_EMAILS = ["your-email@example.com"]
-```
+#### 1. Configure Admin Access
+Any email account with the domain `@dynamicendpoints.com` can access the admin dashboard. No additional configuration needed.
 
 #### 2. Set Up Authentication
 Make sure NextAuth is configured in your environment:
@@ -52,10 +44,11 @@ npm run prisma db push
 - View detailed guest information
 - See dietary restrictions and special requests
 - Download complete list as CSV file
+- Add/edit/delete RSVP entries
 
 #### Security:
 - Protected by NextAuth middleware
-- Only specified admin emails can access
+- Only emails with @dynamicendpoints.com domain can access
 - Session-based authentication
 - Secure API endpoints
 
@@ -71,7 +64,7 @@ npm run prisma db push
    http://localhost:3000/admin
    ```
 
-3. **Sign in with an admin email** (configured in step 1)
+3. **Sign in with any @dynamicendpoints.com email**
 
 4. **Manage your party RSVPs!**
 
@@ -79,13 +72,13 @@ npm run prisma db push
 - The dashboard is responsive and works on mobile devices
 - RSVP data includes user information from the main website
 - CSV downloads include all necessary party planning information
+- You can add new guests directly from the admin panel
 
 ### 🚀 Production Deployment:
-- Update admin emails before deploying
 - Ensure environment variables are set
 - Test authentication with production URLs
 - Verify database connectivity
 
 ---
 
-**Security Note:** Only emails listed in the `ADMIN_EMAILS` array can access the admin dashboard. Make sure to update these before going live!
+**Security Note:** Only emails with the @dynamicendpoints.com domain can access the admin dashboard.

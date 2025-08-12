@@ -2,15 +2,10 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { prisma } from "@/lib/prisma"
 
-// Admin emails - you can add more admin emails here
-const ADMIN_EMAILS = [
-  "admin@example.com", // Replace with your actual admin email
-  "owner@example.com"  // Add more admin emails as needed
-]
-
+// Check if email belongs to admin domain
 async function isAdmin(email: string | null | undefined) {
   if (!email) return false
-  return ADMIN_EMAILS.includes(email)
+  return email.endsWith('@dynamicendpoints.com')
 }
 
 export async function DELETE(
