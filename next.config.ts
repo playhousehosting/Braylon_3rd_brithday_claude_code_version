@@ -34,6 +34,16 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Add transpilePackages for any packages that need transpilation
+  transpilePackages: [],
+  // Ensure proper TypeScript handling
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  // Ensure proper eslint handling
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
 };
 
 export default nextConfig;

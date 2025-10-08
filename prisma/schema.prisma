@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,107 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
 model User {
   id            String    @id @default(cuid())
   name          String?
   email         String    @unique
   emailVerified DateTime?
-  image         String?
   password      String?
-  accounts      Account[]
-  sessions      Session[]
-  rsvp          Rsvp?
-  foodSignup    FoodSignup?
-  photos        Photo[]
-  gameScores    GameScore[]
-  isAdmin       Boolean   @default(false)
+  image         String?
+  rsvp          RSVP?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
-model Rsvp {
+model RSVP {
   id                  String   @id @default(cuid())
   userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id])
   attending           Boolean
-  guestCount          Int      @default(1)
+  guestCount          Int
   dietaryRestrictions String?
   specialRequests     String?
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
-}
-
-model FoodSignup {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  itemName          String
-  quantity          String
-  containsAllergens String?
-  notes             String?
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-}
-
-model Photo {
-  id          String   @id @default(cuid())
-  userId      String
-  url         String
-  overlay     String?
-  description String?
-  approved    Boolean  @default(false)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model GameScore {
-  id        String   @id @default(cuid())
-  userId    String
-  game      String
-  score     Int
-  metadata  Json?
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-}
-
-model SiteSettings {
-  id    String @id @default(cuid())
-  key   String @unique
-  value Json
 }
