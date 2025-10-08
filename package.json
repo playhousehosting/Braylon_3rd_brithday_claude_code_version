@@ -4,12 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "check:no-mock": "./scripts/check-no-mock-data.sh",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -38,7 +39,7 @@
     "framer-motion": "^12.23.12",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.539.0",
-    "next": "15.4.6",
+    "next": "15.5.2",
     "next-auth": "^4.24.11",
     "prisma": "^6.13.0",
     "react": "19.1.0",

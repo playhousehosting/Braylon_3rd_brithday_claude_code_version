@@ -1,0 +1,102 @@
+name: Production Deployment Validation
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main, master ]
+
+jobs:
+  validate-production-ready:
+    runs-on: ubuntu-latest
+    name: Validate Production Readiness
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Check TypeScript compilation
+      run: npx tsc --noEmit
+      
+    - name: Run ESLint
+      run: npm run lint
+      
+    - name: Check Prisma schema
+      run: npx prisma validate
+      
+    - name: Generate Prisma client
+      run: npx prisma generate
+      
+    - name: Check for build readiness
+      run: |
+        echo "Checking build configuration for production..."
+        
+        # Check if DATABASE_URL is referenced properly
+        if ! grep -r "DATABASE_URL" . --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules; then
+          echo "⚠️  Warning: DATABASE_URL environment variable not found in code"
+        else
+          echo "✅ DATABASE_URL environment variable is referenced"
+        fi
+        
+        # Check for proper Prisma client usage
+        if ! grep -r "prisma\." src/ --include="*.ts" --include="*.tsx"; then
+          echo "❌ No Prisma client usage found in source code"
+          exit 1
+        else
+          echo "✅ Prisma client is being used"
+        fi
+        
+        # Check if Next.js config exists
+        if [ ! -f "next.config.ts" ] && [ ! -f "next.config.js" ]; then
+          echo "❌ Next.js configuration file not found"
+          exit 1
+        else
+          echo "✅ Next.js configuration exists"
+        fi
+        
+    - name: Validate Vercel deployment readiness
+      run: |
+        echo "Validating Vercel deployment configuration..."
+        
+        # Check if package.json has correct scripts
+        if ! jq -e '.scripts.build' package.json > /dev/null; then
+          echo "❌ Build script not found in package.json"
+          exit 1
+        fi
+        
+        if ! jq -e '.scripts.start' package.json > /dev/null; then
+          echo "❌ Start script not found in package.json"
+          exit 1
+        fi
+        
+        echo "✅ Vercel deployment scripts are configured"
+        
+        # Check for production environment handling
+        if ! grep -r "process.env.NODE_ENV" . --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules; then
+          echo "⚠️  Warning: NODE_ENV environment variable not found in code"
+        else
+          echo "✅ NODE_ENV environment variable is being checked"
+        fi
+        
+    - name: Test build (without database)
+      run: |
+        echo "Testing build process..."
+        # Create a temporary DATABASE_URL for build test
+        export DATABASE_URL="file:./dev.db"
+        
+        # Generate Prisma client for build
+        npx prisma generate
+        
+        # Test the build process
+        npm run build
+        
+        echo "✅ Build process completed successfully"

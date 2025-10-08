@@ -13,7 +13,7 @@
 • **3D Graphics**: Three.js with React Three Fiber for interactive construction game
 • **Deployment**: Vercel for seamless deployment with environment-specific configurations
 
-## Library Usage Rules
+## Library Usage Rules.
 
 ### UI Components
 • **Primary UI Library**: Use shadcn/ui components exclusively for all UI elements

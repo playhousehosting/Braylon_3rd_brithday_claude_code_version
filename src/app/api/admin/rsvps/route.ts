@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
 import { Session } from "next-auth"
+import { prisma } from "@/lib/prisma"
 
 // Check if email belongs to admin domain
 function isAdminEmail(email: string | null | undefined): boolean {
@@ -19,19 +19,25 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    // Fetch all RSVPs from database with user information
     const rsvps = await prisma.rsvp.findMany({
       include: {
-        user: true
+        user: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'
       }
     })
 
-    // Format the data for the frontend
-    const formattedRsvps = rsvps.map((rsvp) => ({
+    // Transform data for admin response
+    const transformedRsvps = rsvps.map((rsvp: typeof rsvps[0]) => ({
       id: rsvp.id,
-      name: rsvp.user.name || 'No name',
+      name: rsvp.user.name,
       email: rsvp.user.email,
       attending: rsvp.attending,
       guestCount: rsvp.guestCount,
@@ -40,7 +46,7 @@ export async function GET() {
       createdAt: rsvp.createdAt.toISOString()
     }))
 
-    return NextResponse.json({ rsvps: formattedRsvps })
+    return NextResponse.json({ rsvps: transformedRsvps })
   } catch (error) {
     console.error("Error fetching RSVPs:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

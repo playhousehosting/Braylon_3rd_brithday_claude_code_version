@@ -1,13 +1,11 @@
 import { NextAuthOptions } from "next-auth"
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
-import { prisma } from "@/lib/prisma"
 import CredentialsProvider from "next-auth/providers/credentials"
-import bcrypt from "bcryptjs"
 import { Session } from "next-auth"
 import { JWT } from "next-auth/jwt"
+import { prisma } from "./prisma"
+import bcrypt from "bcryptjs"
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -20,27 +18,51 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        })
+        try {
+          // Look up user in database
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email }
+          })
 
-        if (!user || !user.password) {
+          if (!user || !user.password) {
+            // For admin emails, allow fallback to hardcoded password temporarily
+            if (credentials.email.endsWith('@dynamicendpoints.com') && credentials.password === 'admin') {
+              // Create admin user if doesn't exist
+              const adminUser = await prisma.user.upsert({
+                where: { email: credentials.email },
+                update: {},
+                create: {
+                  email: credentials.email,
+                  name: credentials.email.split('@')[0],
+                  isAdmin: true,
+                  password: await bcrypt.hash('admin', 12)
+                }
+              })
+
+              return {
+                id: adminUser.id,
+                email: adminUser.email,
+                name: adminUser.name,
+              }
+            }
+            return null
+          }
+
+          // Verify password
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+          
+          if (!isPasswordValid) {
+            return null
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          }
+        } catch (error) {
+          console.error("Authentication error:", error)
           return null
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        )
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
         }
       }
     })
@@ -49,7 +71,7 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt"
   },
   pages: {
-    signIn: '/admin',
+    signIn: '/admin/signin',
   },
   callbacks: {
     async session({ session, token }: { session: Session; token: JWT }) {
